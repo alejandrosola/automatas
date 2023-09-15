@@ -2,12 +2,12 @@ package model;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import util.EstadoComparator;
+
 
 public class Automata {
     private List<String> lenguaje;
@@ -29,6 +29,10 @@ public class Automata {
 
     public Estado getEstadoInicial() {
         return this.estados.get(this.estadoInicial);
+    }
+
+    public boolean isInputAceptado(List<String> input) throws Exception {
+        return this.isInputAceptado(input, this.getEstadoInicial());
     }
 
     public boolean isInputAceptado(List<String> input, String estadoInicial) throws Exception {
@@ -185,8 +189,19 @@ public class Automata {
 
     public List<Estado> getEstadosList() {
         List<Estado> answer = new ArrayList<>();
+        answer.add(this.getEstadoInicial());
+
+        List<Estado> estadosTemp = new ArrayList<>();
+
         for (Estado e : this.estados.values()) {
-            answer.add(e);
+            estadosTemp.add(e);
+        }
+
+        Collections.sort(estadosTemp,
+                new EstadoComparator());
+        for (Estado e : estadosTemp) {
+            if (!answer.contains(e))
+                answer.add(e);
         }
         return answer;
     }

@@ -9,7 +9,6 @@ import util.Helpers;
 
 public class main {
     public static void main(String[] args) {
-
         try {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Ingrese el archivo csv del autómata");
@@ -23,7 +22,7 @@ public class main {
 
             automata = automata.getDeterministicoEquivalente();
 
-            /*
+            /* 
              * for (Estado e : automata.getEstadosList()) {
              * for (String i : automata.getLenguaje()) {
              * System.out.println(e + " " + e.isAceptador() + " " + i + ": " +
