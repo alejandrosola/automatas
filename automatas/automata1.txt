@@ -1,0 +1,17 @@
+estados.put("S1", new Estado("S1", false));
+estados.put("S2", new Estado("S2", false));
+estados.put("S3", new Estado("S3", true));
+List<Estado> destinos = new ArrayList<>();
+destinos.add(estados.get("S2"));
+destinos.add(estados.get("S3"));
+
+estados.get("S1").addTransicion(new Transicion("a", "", destinos));
+estados.get("S1").addTransicion(new Transicion("b", "", estados.get("S2")));
+estados.get("S2").addTransicion(new Transicion("a", "", estados.get("S1")));
+estados.get("S2").addTransicion(new Transicion("b", "", estados.get("S3")));
+estados.get("S3").addTransicion(new Transicion("a", "", estados.get("S3")));
+estados.get("S3").addTransicion(new Transicion("b", "", estados.get("S3")));
+automata.setEstados(estados);
+automata.setEstadoInicial("S1");
+String[] lenguaje = { "a", "b" };
+automata.setLenguaje(Arrays.asList(lenguaje));

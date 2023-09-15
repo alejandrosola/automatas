@@ -1,0 +1,50 @@
+{
+  "sigma": ["a", "b"],
+  "estados": [
+    {
+      "nombre": "S1",
+      "aceptador": false,
+      "inicial": true,
+      "transiciones": [
+        {
+          "input": "a",
+          "output": "",
+          "destinos": [
+            {
+              "nombreDestino": "S1"
+            },
+            {
+              "nombreDestino": "S2"
+            }
+          ]
+        },
+        {
+          "input": "b",
+          "output": "",
+          "destinos": [
+            {
+              "nombreDestino": "S2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "S2",
+      "aceptador": true,
+      "inicial": false,
+      "transiciones": [
+        {
+          "input": "b",
+          "output": "",
+          "destinos": [{ "nombreDestino": "S1" }]
+        },
+        {
+          "input": "a",
+          "output": "",
+          "destinos": [{ "nombreDestino": "S1" }]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+estados.put("S0", new Estado("S0", false));
+        estados.put("S1", new Estado("S1", false));
+        estados.put("S2", new Estado("S2", false));
+        estados.put("S3", new Estado("S3", false));
+        estados.put("S4", new Estado("S4", true));
+        estados.put("S5", new Estado("S5", false));
+        estados.put("S6", new Estado("S6", true));
+
+        List<Estado> destinos = new ArrayList<>();
+        destinos.add(estados.get("S1"));
+        destinos.add(estados.get("S2"));
+
+        estados.get("S0").addTransicion(new Transicion("a", "", destinos));
+        estados.get("S0").addTransicion(new Transicion("b", "", estados.get("S3")));
+        estados.get("S1").addTransicion(new Transicion("a", "", estados.get("S4")));
+        estados.get("S1").addTransicion(new Transicion("b", "", estados.get("S5")));
+        estados.get("S2").addTransicion(new Transicion("a", "", estados.get("S2")));
+        estados.get("S2").addTransicion(new Transicion("b", "", estados.get("S6")));
+        estados.get("S3").addTransicion(new Transicion("a", "", estados.get("S5")));
+        estados.get("S3").addTransicion(new Transicion("b", "", estados.get("S5")));
+        estados.get("S4").addTransicion(new Transicion("a", "", estados.get("S4")));
+        estados.get("S4").addTransicion(new Transicion("b", "", estados.get("S5")));
+        estados.get("S5").addTransicion(new Transicion("a", "", estados.get("S5")));
+        estados.get("S5").addTransicion(new Transicion("b", "", estados.get("S5")));
+        estados.get("S6").addTransicion(new Transicion("a", "", estados.get("S5")));
+        estados.get("S6").addTransicion(new Transicion("b", "", estados.get("S5")));
+
+        automata.setEstados(estados);
+        automata.setEstadoInicial("S0");
+        String[] lenguaje = { "a", "b" };
+        automata.setLenguaje(Arrays.asList(lenguaje));
