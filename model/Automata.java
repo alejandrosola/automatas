@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import util.Constantes;
 import util.EstadoComparator;
-
 
 public class Automata {
     private List<String> lenguaje;
@@ -130,13 +130,16 @@ public class Automata {
             for (String input : this.lenguaje) {
                 if (estadoActual.getDestinos(input).size() > 1) {
                     String nombre = "";
-
                     for (Estado d : estadoActual.getDestinos(input)) {
-                        for (String s : d.getNombre().split(" ")) {
-                            if (!nombre.contains(s))
-                                nombre += s + " ";
-                        }
+                        if (d != null)
+                            for (String s : d.getNombre().split(" ")) {
+                                if (!nombre.contains(s) && !d.getNombre().equals(Constantes.ERROR))
+                                    nombre += s + " ";
+                            }
                     }
+                    System.out.println(nombre + ".");
+                    nombre = nombre.trim();
+                    System.out.println(nombre + ".");
 
                     if (estadoActual.getNombre().equals(nombre)) {
                         estadoActual.setTransicionForInput(new Transicion(input, "", estadoActual), input);

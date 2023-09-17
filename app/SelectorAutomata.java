@@ -18,6 +18,7 @@ import javax.swing.table.DefaultTableModel;
 
 import model.Automata;
 import model.Estado;
+import util.Constantes;
 import util.Helpers;
 
 import java.awt.BorderLayout;
@@ -29,47 +30,44 @@ public class SelectorAutomata {
         JFrame frame = new JFrame("Tabla de Automata");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JButton openFileButton = new JButton("Seleccionar Archivo");
-            openFileButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    JFileChooser fileChooser = new JFileChooser();
-                    int result = fileChooser.showOpenDialog(frame);
-                    if (result == JFileChooser.APPROVE_OPTION) {
-                        File selectedFile = fileChooser.getSelectedFile();
-                        String fileName = selectedFile.getAbsolutePath();
-                        try {
-                            Automata automata = Helpers.readAutomataFromCSV(fileName);
-                            mostrarAutomata(automata);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
+        openFileButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                int result = fileChooser.showOpenDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    String fileName = selectedFile.getAbsolutePath();
+                    try {
+                        Automata automata = Helpers.readAutomataFromCSV(fileName);
+                        mostrarAutomata(automata);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
                 }
-            });
-            JTextField fileNameTextField = new JTextField(20);
-            fileNameTextField.setEditable(false);
+            }
+        });
+        JTextField fileNameTextField = new JTextField(20);
+        fileNameTextField.setEditable(false);
 
-            JPanel fileSelectionPanel = new JPanel();
-            fileSelectionPanel.add(openFileButton);
-            frame.add(fileSelectionPanel, BorderLayout.SOUTH);
-            frame.setSize(400, 300);
-            frame.setVisible(true);
+        JPanel fileSelectionPanel = new JPanel();
+        fileSelectionPanel.add(openFileButton);
+        frame.add(fileSelectionPanel, BorderLayout.SOUTH);
+        frame.setSize(400, 300);
+        frame.setVisible(true);
     }
 
     private static void mostrarAutomata(Automata automata) {
         try {
+            JFrame frame = new JFrame("Autómata");
 
-        JFrame frame = new JFrame("Tabla de Automata");
-
-            // Crear un modelo de tabla
             DefaultTableModel model = new DefaultTableModel();
             model.addColumn("Delta");
-            for (String c : automata.getLenguaje()) {
-                model.addColumn(c);
+            for (String i : automata.getLenguaje()) {
+                model.addColumn(i);
             }
             model.addColumn("F");
 
-            // Crear la tabla
             JTable table = new JTable(model);
             JScrollPane scrollPane = new JScrollPane(table);
 
@@ -78,30 +76,31 @@ public class SelectorAutomata {
                 Map<String, String> destinos = new HashMap<>();
                 for (String i : automata.getLenguaje()) {
                     for (Estado d : e.getDestinos(i)) {
+                        String destino = d != null ? d.getNombre() : "-";
                         if (destinos.get(i) != null) {
                             String temp = destinos.get(i);
-                            destinos.put(i, temp + " " + d.getNombre());
+                            destinos.put(i, temp + " " + destino);
                         } else {
-                            destinos.put(i, d.getNombre());
+                            destinos.put(i, destino);
                         }
                     }
                 }
                 String[] row = new String[automata.getLenguaje().size() + 2];
-                row[0] = e.getNombre();
-                int j = 1;
-                for (String i : automata.getLenguaje()) {
-                    row[j] = destinos.get(i);
-                    j++;
+                if (!e.getNombre().equals(Constantes.ERROR)) {
+                    row[0] = e.getNombre();
+                    int j = 1;
+                    for (String i : automata.getLenguaje()) {
+                        row[j] = destinos.get(i);
+                        j++;
+                    }
+                    row[row.length - 1] = e.isAceptador() ? "1" : "0";
+                    model.addRow(row);
                 }
-                row[row.length - 1] = e.isAceptador() ? "1": "0";
-                model.addRow(row);
             }
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            table.getColumnModel().getColumn(0).setPreferredWidth(100);
-            table.getColumnModel().getColumn(1).setPreferredWidth(100);
-            table.getColumnModel().getColumn(2).setPreferredWidth(100);
-
-
+            table.getColumnModel().getColumn(0).setPreferredWidth(200);
+            table.getColumnModel().getColumn(1).setPreferredWidth(200);
+            table.getColumnModel().getColumn(2).setPreferredWidth(200);
 
             frame.add(scrollPane, BorderLayout.CENTER);
 
@@ -130,7 +129,7 @@ public class SelectorAutomata {
                         String[] cadena = input.getText().split(" ");
                         try {
                             if (automata.isInputAceptado(Arrays.asList(cadena))) {
-                            resultado.setText("Cadena aceptada");
+                                resultado.setText("Cadena aceptada");
                             } else {
                                 resultado.setText("Cadena rechazada");
                             }
@@ -142,7 +141,7 @@ public class SelectorAutomata {
                 southPanel.add(confirmar);
                 southPanel.add(resultado);
             }
-            
+
             frame.add(southPanel, BorderLayout.SOUTH);
             frame.setVisible(true);
             frame.setSize(400, 300);

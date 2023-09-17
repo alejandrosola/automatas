@@ -15,6 +15,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 
 public class Helpers {
+
     public static Automata readAutomataFromCSV(String csvFilePath) throws IOException {
         Automata automata = new Automata();
         List<String> sigma = new ArrayList<>();
@@ -45,6 +46,12 @@ public class Helpers {
                 estadoMap.put(estadoActualNombre, estadoActual);
             }
         }
+        Estado estadoTemp = new Estado(Constantes.ERROR, false);
+        estadoMap.put(Constantes.ERROR, estadoTemp);
+        automata.addEstado(estadoTemp);
+        for (String i : sigma) {
+            estadoMap.get(Constantes.ERROR).addTransicion(new Transicion(i, "", estadoMap.get(Constantes.ERROR)));
+        }
 
         for (int i = 2; i < allData.size(); i++) {
             String[] row = allData.get(i);
@@ -53,7 +60,7 @@ public class Helpers {
             for (int j = 1; j < row.length - 2; j++) {
 
                 String input = sigma.get(j - 1);
-                String destinoNombre = row[j];
+                String destinoNombre = !row[j].equals("") ? row[j] : Constantes.ERROR;
                 List<Estado> destinos = new ArrayList<>();
                 if (estadoMap.get(destinoNombre) == null) {
                     for (String s : destinoNombre.split(" ")) {
