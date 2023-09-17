@@ -22,6 +22,7 @@ import util.Constantes;
 import util.Helpers;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -60,6 +61,7 @@ public class SelectorAutomata {
     private static void mostrarAutomata(Automata automata) {
         try {
             JFrame frame = new JFrame("Autómata");
+            Font fuente = new Font("Arial", Font.PLAIN, 15);
 
             DefaultTableModel model = new DefaultTableModel();
             model.addColumn("Delta");
@@ -69,6 +71,7 @@ public class SelectorAutomata {
             model.addColumn("F");
 
             JTable table = new JTable(model);
+            table.setFont(fuente);
             JScrollPane scrollPane = new JScrollPane(table);
 
             // Agregar estado inicial a la tabla (porque quiero que aparezca primero)

@@ -47,6 +47,9 @@ public class Automata {
     public boolean isInputAceptado(List<String> input, Estado estadoInicial) throws Exception {
         if (!this.isDeterministico())
             throw new Exception("El automáta debe ser determinístico");
+        if (input.get(0).equals("")) {
+            return this.getEstadoInicial().isAceptador();
+        }
         for (String i : input)
             if (!lenguaje.contains(i))
                 throw new Exception("Input inválido");
@@ -137,9 +140,7 @@ public class Automata {
                                     nombre += s + " ";
                             }
                     }
-                    System.out.println(nombre + ".");
                     nombre = nombre.trim();
-                    System.out.println(nombre + ".");
 
                     if (estadoActual.getNombre().equals(nombre)) {
                         estadoActual.setTransicionForInput(new Transicion(input, "", estadoActual), input);
@@ -180,6 +181,46 @@ public class Automata {
         deterministicoEquivalente.setLenguaje(this.lenguaje);
 
         return deterministicoEquivalente;
+    }
+
+    public Automata getMinimizado() {
+        Automata minimizaco = new Automata();
+        List<Estado> estadps = new ArrayList<>();
+        Estado nuevoEstadoInicial = new Estado(this.getEstadoInicial().getNombre(),
+                this.getEstadoInicial().isDeterministico());
+
+        List<Estado> destinosTemp = new ArrayList<>();
+        for (String input : this.lenguaje) {
+            destinosTemp = (this.getEstadoInicial().getTransiciones().get(input).getDestinos());
+            nuevoEstadoInicial.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
+        }
+        // ist<String> cadenas = this.getCadenas("", 2);
+        return null;
+    }
+
+    private List<String> getCadenas(String cadenaParcial, int n) {
+        List<String> resultado = new ArrayList<>();
+        if (n == 0) {
+            resultado.add(cadenaParcial);
+        } else {
+            for (String c : this.getLenguaje()) {
+                getCadenas(cadenaParcial + c, n - 1, resultado);
+            }
+        }
+
+        return resultado;
+    }
+
+    private List<String> getCadenas(String cadenaParcial, int n, List<String> resultado) {
+        if (n == 0) {
+            resultado.add(cadenaParcial);
+        } else {
+            for (String c : this.getLenguaje()) {
+                getCadenas(cadenaParcial + c, n - 1, resultado);
+            }
+        }
+
+        return resultado;
     }
 
     public Estado getEstado(String nombre) {
