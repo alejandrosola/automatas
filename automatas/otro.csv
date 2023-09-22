@@ -1,0 +1,8 @@
+Sigma
+0,1
+delta,0,1,f,
+A,B,C,1,
+B,B,D,1,
+C,B,E,1,
+D,B,E,1,
+E,E,E,0,

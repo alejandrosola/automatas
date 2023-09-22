@@ -1,10 +1,16 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
 
 import util.Constantes;
 import util.EstadoComparator;
@@ -168,7 +174,7 @@ public class Automata {
                     }
                 }
             }
-            // Siempre que llegue acá deberia ser deterministico
+            // Siempre que llegue acá debería ser deterministico, pero chequeo por si acaso
             if (estadoActual.isDeterministico()) {
                 estadosDeterministicos.add(estadoActual);
             }
@@ -178,14 +184,15 @@ public class Automata {
         deterministicoEquivalente = new Automata();
         deterministicoEquivalente.setEstados(estadosDeterministicos);
         deterministicoEquivalente.setEstadoInicial(nuevoEstadoInicial.getNombre());
-        deterministicoEquivalente.setLenguaje(this.lenguaje);
+        deterministicoEquivalente.setLenguaje(new ArrayList<String>(this.lenguaje));
 
         return deterministicoEquivalente;
     }
 
-    public Automata getMinimizado() {
-        Automata minimizaco = new Automata();
-        List<Estado> estadps = new ArrayList<>();
+    public Automata getMinimizado() throws Exception {
+        if (!this.isDeterministico())
+            throw new Exception("El autómata debe ser determinístico");
+        // this.eliminarEstadosInalcanzables();
         Estado nuevoEstadoInicial = new Estado(this.getEstadoInicial().getNombre(),
                 this.getEstadoInicial().isDeterministico());
 
@@ -194,17 +201,136 @@ public class Automata {
             destinosTemp = (this.getEstadoInicial().getTransiciones().get(input).getDestinos());
             nuevoEstadoInicial.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
         }
-        // ist<String> cadenas = this.getCadenas("", 2);
-        return null;
+
+        // Separar los estados aceptadores de los no aceptadores en dos grupos
+        List<List<Estado>> gruposSinProcesar = new ArrayList<>();
+        List<List<Estado>> gruposMinimizados = new ArrayList<>();
+        gruposSinProcesar.add(0, new ArrayList<>());
+        gruposSinProcesar.add(1, new ArrayList<>());
+        for (Estado e : this.getEstadosList()) {
+            destinosTemp = new ArrayList<>();
+            if (e.isAceptador()) {
+                Estado es = new Estado(e.getNombre(), e.isAceptador());
+                gruposSinProcesar.get(1).add(es);
+                for (String input : this.lenguaje) {
+                    destinosTemp = (e.getTransiciones().get(input).getDestinos());
+                    es.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
+                }
+            } else {
+                Estado es = new Estado(e.getNombre(), e.isAceptador());
+                gruposSinProcesar.get(0).add(es);
+                for (String input : this.lenguaje) {
+                    destinosTemp = (e.getTransiciones().get(input).getDestinos());
+                    es.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
+                }
+            }
+        }
+
+        int longitud = 1;
+        boolean termine = false;
+        List<List<Estado>> tempList = new ArrayList<>();
+        // Recorrer cada grupo con las cadenas generadas para ver si se separan
+        while (!termine) {
+            termine = true;
+            longitud++;
+            gruposSinProcesar.addAll(tempList);
+            tempList = new ArrayList<>();
+            List<String> cadenas = this.getCadenas(longitud);
+            while (!gruposSinProcesar.isEmpty()) {
+                List<Estado> grupo = gruposSinProcesar.remove(0);
+                Map<Estado, String> resultados = new HashMap<>();
+                for (Estado e : grupo) {
+                    for (String cadena : cadenas) {
+                        if (resultados.get(e) == null) {
+                            resultados.put(e, "");
+                        }
+                        String temp = e.isInputAceptado(Arrays.asList(cadena.split(" "))) ? "1" : "0";
+                        resultados.put(e, resultados.get(e) + temp);
+                    }
+                }
+                List<List<Estado>> nuevosGrupos = this.nuevosGrupos(resultados);
+                if (nuevosGrupos.size() > 1) {
+                    termine = false;
+                    for (List<Estado> g : nuevosGrupos) {
+                        tempList.add(g);
+                    }
+                } else {
+                    gruposMinimizados.add(nuevosGrupos.get(0));
+                }
+            }
+        }
+
+        Automata minimizado = new Automata();
+        Map<String, Estado> estadosMin = new HashMap<>();
+        List<Estado> grupoAceptador = new ArrayList<>();
+        for (List<Estado> grupoMin : gruposMinimizados) {
+            if (this.grupoContiene(grupoMin, this.getEstadoInicial())) {
+                grupoAceptador = grupoMin;
+            }
+            boolean aceptador = false;
+            for (Estado e : grupoMin) {
+                aceptador = e.isAceptador() ? true : aceptador;
+            }
+            estadosMin.put(grupoMin.get(0).getNombre(),
+                    new Estado(grupoMin.get(0).getNombre(), aceptador));
+
+        }
+        Estado nuevoInicial = null;
+        for (Estado em : estadosMin.values()) {
+            if (grupoContiene(grupoAceptador, em)) {
+                nuevoInicial = em;
+            }
+            for (String i : this.getLenguaje()) {
+                for (List<Estado> grupoMin : gruposMinimizados) {
+                    if (grupoContiene(grupoMin, this.getEstado(em.getNombre()).getDestinos(i).get(0))) {
+                        em.addTransicion(
+                                new Transicion(i, "", estadosMin.get(grupoMin.get(0).getNombre())));
+
+                    }
+                }
+            }
+        }
+        minimizado.setEstados(estadosMin);
+        minimizado.setEstadoInicial(nuevoInicial.getNombre());
+        minimizado.setLenguaje(new ArrayList<String>(this.lenguaje));
+
+        return minimizado;
     }
 
-    private List<String> getCadenas(String cadenaParcial, int n) {
+    private boolean grupoContiene(List<Estado> grupo, Estado e) {
+        for (Estado es : grupo) {
+            if (es.getNombre().equals(e.getNombre())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<List<Estado>> nuevosGrupos(Map<Estado, String> resultados) {
+        List<List<Estado>> answer = new ArrayList<>();
+        Map<String, List<Estado>> temp = new HashMap<>();
+
+        for (Entry<Estado, String> e : resultados.entrySet()) {
+            if (temp.get(e.getValue()) == null) {
+                temp.put(e.getValue(), new ArrayList<>());
+            }
+            temp.get(e.getValue()).add(e.getKey());
+        }
+
+        for (List<Estado> l : temp.values()) {
+            answer.add(l);
+        }
+        return answer;
+    }
+
+    private List<String> getCadenas(int n) {
+        String cadenaParcial = "";
         List<String> resultado = new ArrayList<>();
         if (n == 0) {
-            resultado.add(cadenaParcial);
+            resultado.add(cadenaParcial.trim());
         } else {
             for (String c : this.getLenguaje()) {
-                getCadenas(cadenaParcial + c, n - 1, resultado);
+                getCadenas(cadenaParcial + c + " ", n - 1, resultado);
             }
         }
 
@@ -213,10 +339,10 @@ public class Automata {
 
     private List<String> getCadenas(String cadenaParcial, int n, List<String> resultado) {
         if (n == 0) {
-            resultado.add(cadenaParcial);
+            resultado.add(cadenaParcial.trim());
         } else {
             for (String c : this.getLenguaje()) {
-                getCadenas(cadenaParcial + c, n - 1, resultado);
+                getCadenas(cadenaParcial + c + " ", n - 1, resultado);
             }
         }
 
@@ -236,15 +362,15 @@ public class Automata {
         answer.add(this.getEstadoInicial());
 
         List<Estado> estadosTemp = new ArrayList<>();
-
         for (Estado e : this.estados.values()) {
             estadosTemp.add(e);
         }
 
         Collections.sort(estadosTemp,
                 new EstadoComparator());
+
         for (Estado e : estadosTemp) {
-            if (!answer.contains(e))
+            if (!e.getNombre().equals(this.getEstadoInicial().getNombre()))
                 answer.add(e);
         }
         return answer;
@@ -264,6 +390,48 @@ public class Automata {
 
     public void setLenguaje(List<String> lenguaje) {
         this.lenguaje = lenguaje;
+    }
+
+    private void eliminarEstadosInalcanzables() {
+        Set<Estado> estadosAlcanzables = new HashSet<>();
+        Queue<Estado> cola = new LinkedList<>();
+
+        // Agregar el estado inicial a la lista de alcanzables
+        Estado estadoInicial = this.getEstadoInicial();
+        estadosAlcanzables.add(estadoInicial);
+        cola.add(estadoInicial);
+
+        // Realizar un recorrido en anchura para encontrar estados alcanzables
+        while (!cola.isEmpty()) {
+            Estado estadoActual = cola.poll();
+            for (String input : this.lenguaje) {
+                Estado estadoDestino = estadoActual.getDestinos(input).get(0);
+                if (estadoDestino != null && !estadosAlcanzables.contains(estadoDestino)) {
+                    estadosAlcanzables.add(estadoDestino);
+                    cola.add(estadoDestino);
+                }
+            }
+        }
+
+        // Eliminar estados inalcanzables
+        List<String> estadosAEliminar = new ArrayList<>();
+        for (Estado estado : this.getEstadosList()) {
+            if (!estadosAlcanzables.contains(estado)) {
+                estadosAEliminar.add(estado.getNombre());
+            }
+        }
+
+        for (String estadoAEliminar : estadosAEliminar) {
+            this.estados.remove(estadoAEliminar);
+        }
+
+        // Actualizar el estado inicial si es necesario
+        if (!estadosAlcanzables.contains(this.getEstadoInicial())) {
+            // Selecciona un nuevo estado inicial de los estados alcanzables (si es
+            // necesario)
+            Estado nuevoEstadoInicial = estadosAlcanzables.iterator().next();
+            this.setEstadoInicial(nuevoEstadoInicial.getNombre());
+        }
     }
 
 }

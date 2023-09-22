@@ -26,7 +26,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class SelectorAutomata {
+public class Main {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Tabla de Automata");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -43,7 +43,7 @@ public class SelectorAutomata {
                         Automata automata = Helpers.readAutomataFromCSV(fileName);
                         mostrarAutomata(automata);
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        System.err.println(ex.getMessage());
                     }
                 }
             }
@@ -143,6 +143,20 @@ public class SelectorAutomata {
                 });
                 southPanel.add(confirmar);
                 southPanel.add(resultado);
+
+                JButton minimizar = new JButton("Minimizar");
+                minimizar.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            mostrarAutomata(automata.getMinimizado());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                        // mostrarAutomata(deterministicoEquivalente);
+                    }
+                });
+                southPanel.add(minimizar);
             }
 
             frame.add(southPanel, BorderLayout.SOUTH);
