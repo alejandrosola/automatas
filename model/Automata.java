@@ -106,9 +106,39 @@ public class Automata {
         return newEstado;
     }
 
+    private Automata getCopy(Automata automata) {
+        Map<String, Estado> estados = new HashMap<>();
+        List<String> lenguaje = new ArrayList<>();
+
+        for (String i : automata.getLenguaje()) {
+            lenguaje.add(i);
+        }
+
+        for (Estado e : automata.getEstadosList()) {
+            estados.put(e.getNombre(), new Estado(e.getNombre(), e.isAceptador()));
+        }
+
+        for (Estado e : estados.values()) {
+            for (String i : automata.getLenguaje()) {
+                List<Estado> destinos = new ArrayList<>();
+                for (Estado destino : automata.getEstado(e.getNombre()).getDestinos(i)) {
+                    destinos.add(estados.get(destino.getNombre()));
+                }
+                e.setTransicionForInput(new Transicion(i, "", destinos), i);
+            }
+        }
+
+        Automata answer = new Automata();
+        answer.setEstados(estados);
+        answer.setEstadoInicial(automata.getEstadoInicial().getNombre());
+        answer.setLenguaje(lenguaje);
+
+        return answer;
+    }
+
     public Automata getDeterministicoEquivalente() {
         if (this.isDeterministico())
-            return this;
+            return this.getCopy(this);
 
         Automata deterministicoEquivalente = new Automata();
         List<Estado> estadosDeterministicos = new ArrayList<>();

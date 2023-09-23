@@ -30,6 +30,7 @@ public class Main {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Tabla de Automata");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JLabel title = new JLabel("Seleccione el autómata (csv)");
         JButton openFileButton = new JButton("Seleccionar Archivo");
         openFileButton.addActionListener(new ActionListener() {
             @Override
@@ -52,6 +53,7 @@ public class Main {
         fileNameTextField.setEditable(false);
 
         JPanel fileSelectionPanel = new JPanel();
+        fileSelectionPanel.add(title);
         fileSelectionPanel.add(openFileButton);
         frame.add(fileSelectionPanel, BorderLayout.SOUTH);
         frame.setSize(400, 300);
