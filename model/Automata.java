@@ -264,7 +264,6 @@ public class Automata {
             longitud++;
             tempList = new ArrayList<>();
             List<String> cadenas = this.getCadenas(longitud);
-            System.out.println(gruposSinProcesar);
             while (!gruposSinProcesar.isEmpty()) {
                 List<Estado> grupo = gruposSinProcesar.remove(0);
                 Map<Estado, String> resultados = new HashMap<>();
@@ -425,14 +424,16 @@ public class Automata {
         DirectedGraph<String, String> grafo = new DirectedSparseGraph<>();
 
         for (Estado e : this.getEstadosList()) {
-            grafo.addVertex(e.getNombre());
+            if (!e.getNombre().equals(Constantes.ERROR))
+                grafo.addVertex(e.getNombre());
         }
         Integer n = 0;
         for (Estado e : this.getEstadosList()) {
             for (String i : this.getLenguaje()) {
                 for (Estado d : e.getDestinos(i)) {
                     // Le agrego n porque el identificador del arco tiene que ser único
-                    grafo.addEdge(i + " " + n.toString(), e.getNombre(), d.getNombre());
+                    if (!d.getNombre().equals(Constantes.ERROR))
+                        grafo.addEdge(i + " " + n.toString(), e.getNombre(), d.getNombre());
                     n++;
                 }
             }
