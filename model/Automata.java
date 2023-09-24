@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
+
+import edu.uci.ics.jung.graph.DirectedGraph;
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
 
 import util.Constantes;
 import util.EstadoComparator;
@@ -256,16 +255,16 @@ public class Automata {
             }
         }
 
-        int longitud = 1;
+        int longitud = 0;
         boolean termine = false;
         List<List<Estado>> tempList = new ArrayList<>();
         // Recorrer cada grupo con las cadenas generadas para ver si se separan
         while (!termine) {
             termine = true;
             longitud++;
-            gruposSinProcesar.addAll(tempList);
             tempList = new ArrayList<>();
             List<String> cadenas = this.getCadenas(longitud);
+            System.out.println(gruposSinProcesar);
             while (!gruposSinProcesar.isEmpty()) {
                 List<Estado> grupo = gruposSinProcesar.remove(0);
                 Map<Estado, String> resultados = new HashMap<>();
@@ -281,16 +280,16 @@ public class Automata {
                 List<List<Estado>> nuevosGrupos = this.nuevosGrupos(resultados);
                 if (nuevosGrupos.size() > 1) {
                     termine = false;
-                    for (List<Estado> g : nuevosGrupos) {
-                        tempList.add(g);
-                    }
-                } else {
-                    gruposMinimizados.add(nuevosGrupos.get(0));
+                }
+                for (List<Estado> g : nuevosGrupos) {
+                    tempList.add(g);
                 }
             }
+            gruposSinProcesar.addAll(tempList);
         }
 
         Automata minimizado = new Automata();
+        gruposMinimizados = gruposSinProcesar;
         Map<String, Estado> estadosMin = new HashMap<>();
         List<Estado> grupoAceptador = new ArrayList<>();
         for (List<Estado> grupoMin : gruposMinimizados) {
@@ -422,46 +421,24 @@ public class Automata {
         this.lenguaje = lenguaje;
     }
 
-    private void eliminarEstadosInalcanzables() {
-        Set<Estado> estadosAlcanzables = new HashSet<>();
-        Queue<Estado> cola = new LinkedList<>();
+    public DirectedGraph<String, String> getGrafo() {
+        DirectedGraph<String, String> grafo = new DirectedSparseGraph<>();
 
-        // Agregar el estado inicial a la lista de alcanzables
-        Estado estadoInicial = this.getEstadoInicial();
-        estadosAlcanzables.add(estadoInicial);
-        cola.add(estadoInicial);
-
-        // Realizar un recorrido en anchura para encontrar estados alcanzables
-        while (!cola.isEmpty()) {
-            Estado estadoActual = cola.poll();
-            for (String input : this.lenguaje) {
-                Estado estadoDestino = estadoActual.getDestinos(input).get(0);
-                if (estadoDestino != null && !estadosAlcanzables.contains(estadoDestino)) {
-                    estadosAlcanzables.add(estadoDestino);
-                    cola.add(estadoDestino);
+        for (Estado e : this.getEstadosList()) {
+            grafo.addVertex(e.getNombre());
+        }
+        Integer n = 0;
+        for (Estado e : this.getEstadosList()) {
+            for (String i : this.getLenguaje()) {
+                for (Estado d : e.getDestinos(i)) {
+                    // Le agrego n porque el identificador del arco tiene que ser único
+                    grafo.addEdge(i + " " + n.toString(), e.getNombre(), d.getNombre());
+                    n++;
                 }
             }
         }
 
-        // Eliminar estados inalcanzables
-        List<String> estadosAEliminar = new ArrayList<>();
-        for (Estado estado : this.getEstadosList()) {
-            if (!estadosAlcanzables.contains(estado)) {
-                estadosAEliminar.add(estado.getNombre());
-            }
-        }
-
-        for (String estadoAEliminar : estadosAEliminar) {
-            this.estados.remove(estadoAEliminar);
-        }
-
-        // Actualizar el estado inicial si es necesario
-        if (!estadosAlcanzables.contains(this.getEstadoInicial())) {
-            // Selecciona un nuevo estado inicial de los estados alcanzables (si es
-            // necesario)
-            Estado nuevoEstadoInicial = estadosAlcanzables.iterator().next();
-            this.setEstadoInicial(nuevoEstadoInicial.getNombre());
-        }
+        return grafo;
     }
 
 }

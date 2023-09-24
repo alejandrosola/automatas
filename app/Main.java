@@ -16,13 +16,28 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import org.apache.commons.collections15.Transformer;
+
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
+import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 import model.Automata;
 import model.Estado;
 import util.Constantes;
 import util.Helpers;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Paint;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -160,6 +175,61 @@ public class Main {
                 });
                 southPanel.add(minimizar);
             }
+
+            JButton visualizar = new JButton("Visualizar");
+            visualizar.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Graph<String, String> grafo = automata.getGrafo();
+
+                    Layout<String, String> layout = new CircleLayout(grafo);
+                    layout.setSize(new Dimension(300, 300)); // sets the initial size of the space
+                    // The BasicVisualizationServer<V,E> is parameterized by the edge types
+                    VisualizationViewer<String, String> vv = new VisualizationViewer<String, String>(layout);
+                    vv.setPreferredSize(new Dimension(350, 350)); // Sets the viewing area size
+                    vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+                    vv.getRenderContext().setEdgeLabelTransformer(new EdgeLabeller());
+                    vv.getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
+                    vv.getRenderingHints().put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    Transformer<String, Paint> vertexPaint = new Transformer<String, Paint>() {
+                        public Paint transform(String vertex) {
+                            // Cambiar el color del vértice "A" a rojo, los demás en negro
+                            if (vertex.equals(automata.getEstadoInicial().getNombre())) {
+                                return Color.cyan;
+                            } else {
+                                return Color.WHITE;
+                            }
+                        }
+                    };
+
+                    Transformer<String, Stroke> edgeStroke = new Transformer<String, Stroke>() {
+                        public Stroke transform(String v) {
+                            // Cambiar el grosor de las aristas conectadas al vértice "A" a un grosor más
+                            // grueso
+                            if (automata.getEstado(v).isAceptador()) {
+                                return new BasicStroke(2.0f); // Grosor más grueso
+                            } else {
+                                return new BasicStroke(1.0f); // Grosor normal
+                            }
+                        }
+                    };
+
+                    // Asignar el Transformer al renderizador de vértices
+                    vv.getRenderContext().setVertexFillPaintTransformer(vertexPaint);
+                    vv.getRenderContext().setVertexStrokeTransformer(edgeStroke);
+
+                    DefaultModalGraphMouse<Integer, String> gm = new DefaultModalGraphMouse<>();
+                    vv.setGraphMouse(gm);
+
+                    JFrame grafoFrame = new JFrame("Grafo del autómata");
+                    grafoFrame.getContentPane().add(vv);
+                    grafoFrame.pack();
+                    grafoFrame.setVisible(true);
+                    grafoFrame.setSize(400, 300);
+                }
+            });
+            southPanel.add(visualizar);
 
             frame.add(southPanel, BorderLayout.SOUTH);
             frame.setVisible(true);
