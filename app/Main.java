@@ -181,6 +181,7 @@ public class Main {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     Graph<String, String> grafo = automata.getGrafo();
+                    System.out.println(grafo);
 
                     Layout<String, String> layout = new CircleLayout(grafo);
                     layout.setSize(new Dimension(300, 300)); // sets the initial size of the space

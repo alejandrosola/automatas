@@ -432,8 +432,19 @@ public class Automata {
             for (String i : this.getLenguaje()) {
                 for (Estado d : e.getDestinos(i)) {
                     // Le agrego n porque el identificador del arco tiene que ser único
-                    if (!d.getNombre().equals(Constantes.ERROR))
-                        grafo.addEdge(i + " " + n.toString(), e.getNombre(), d.getNombre());
+                    if (!d.getNombre().equals(Constantes.ERROR)) {
+                        if (!grafo.addEdge(i + " " + n.toString(), e.getNombre(), d.getNombre())) {
+                            String edge = grafo.findEdge(e.getNombre(), d.getNombre());
+                            System.out.println(edge);
+                            grafo.removeEdge(edge);
+                            System.out.println("AGREGANDO NUEVO");
+                            if (!grafo.addEdge(edge.toString().split(" ")[0] + "," + i + " " + n.toString(),
+                                    e.getNombre(), d.getNombre())) {
+                                System.out.println("NOPUED");
+                            }
+                        }
+
+                    }
                     n++;
                 }
             }
