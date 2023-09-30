@@ -55,9 +55,10 @@ public class Automata {
         if (input.get(0).equals("")) {
             return this.getEstadoInicial().isAceptador();
         }
-        for (String i : input)
+        for (String i : input) {
             if (!lenguaje.contains(i))
                 throw new Exception("Input inválido");
+        }
         return this.estados.get(estadoInicial.getNombre()).isInputAceptado(input);
     }
 
@@ -93,6 +94,7 @@ public class Automata {
             destinos.put(input, new ArrayList<>());
             for (Estado e : estados) {
                 for (Estado destino : e.getDestinos(input)) {
+                    System.out.println(e + "----" + e.getDestinos(input) + "---" + input);
                     if (!this.destinosContains(destinos.get(input), destino)) {
                         destinos.get(input).add(new Transicion(input, "", destino));
                     }
@@ -144,9 +146,16 @@ public class Automata {
         Estado nuevoEstadoInicial = new Estado(this.getEstadoInicial().getNombre(),
                 this.getEstadoInicial().isDeterministico());
 
+        Map<String, Estado> copiaEstados = new HashMap<>();
+        for (Estado e : this.getEstadosList()) {
+            copiaEstados.put(e.getNombre(), new Estado(e.getNombre(), e.isAceptador()));
+        }
+
         List<Estado> destinosTemp = new ArrayList<>();
         for (String input : this.lenguaje) {
-            destinosTemp = (this.getEstadoInicial().getTransiciones().get(input).getDestinos());
+            for (Estado d : this.getEstadoInicial().getDestinos(input)) {
+                destinosTemp.add(copiaEstados.get(d.getNombre()));
+            }
             nuevoEstadoInicial.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
         }
 
@@ -156,7 +165,9 @@ public class Automata {
             destinosTemp = new ArrayList<>();
             estadosSinProcesar.add(0, new Estado(e.getNombre(), e.isAceptador()));
             for (String input : this.lenguaje) {
-                destinosTemp = (e.getTransiciones().get(input).getDestinos());
+                for (Estado d : e.getDestinos(input)) {
+                    destinosTemp.add(copiaEstados.get(d.getNombre()));
+                }
                 estadosSinProcesar.get(0).setTransicionForInput(new Transicion(input, "", destinosTemp), input);
             }
         }
@@ -196,6 +207,7 @@ public class Automata {
                         }
 
                         if (!contiene) {
+                            System.out.println(estadoActual + "----" + estadoActual.getDestinos(input) + "---" + input);
                             Estado newEstado = this.getNewEstado(estadoActual.getDestinos(input), nombre);
                             estadoActual.setTransicionForInput(new Transicion(input, "", newEstado), input);
                             estadosSinProcesar.add(newEstado);
@@ -221,13 +233,19 @@ public class Automata {
     public Automata getMinimizado() throws Exception {
         if (!this.isDeterministico())
             throw new Exception("El autómata debe ser determinístico");
-        // this.eliminarEstadosInalcanzables();
         Estado nuevoEstadoInicial = new Estado(this.getEstadoInicial().getNombre(),
                 this.getEstadoInicial().isDeterministico());
 
+        Map<String, Estado> copiaEstados = new HashMap<>();
+        for (Estado e : this.getEstadosList()) {
+            copiaEstados.put(e.getNombre(), new Estado(e.getNombre(), e.isAceptador()));
+        }
+
         List<Estado> destinosTemp = new ArrayList<>();
         for (String input : this.lenguaje) {
-            destinosTemp = (this.getEstadoInicial().getTransiciones().get(input).getDestinos());
+            for (Estado d : this.getEstadoInicial().getDestinos(input)) {
+                destinosTemp.add(copiaEstados.get(d.getNombre()));
+            }
             nuevoEstadoInicial.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
         }
 
@@ -239,18 +257,22 @@ public class Automata {
         for (Estado e : this.getEstadosList()) {
             destinosTemp = new ArrayList<>();
             if (e.isAceptador()) {
-                Estado es = new Estado(e.getNombre(), e.isAceptador());
-                gruposSinProcesar.get(1).add(es);
+                gruposSinProcesar.get(1).add(copiaEstados.get(e.getNombre()));
                 for (String input : this.lenguaje) {
-                    destinosTemp = (e.getTransiciones().get(input).getDestinos());
-                    es.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
+                    for (Estado d : e.getDestinos(input)) {
+                        destinosTemp.add(copiaEstados.get(d.getNombre()));
+                    }
+                    copiaEstados.get(e.getNombre()).setTransicionForInput(new Transicion(input, "", destinosTemp),
+                            input);
                 }
             } else {
-                Estado es = new Estado(e.getNombre(), e.isAceptador());
-                gruposSinProcesar.get(0).add(es);
+                gruposSinProcesar.get(0).add(copiaEstados.get(e.getNombre()));
                 for (String input : this.lenguaje) {
-                    destinosTemp = (e.getTransiciones().get(input).getDestinos());
-                    es.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
+                    for (Estado d : e.getDestinos(input)) {
+                        destinosTemp.add(copiaEstados.get(d.getNombre()));
+                    }
+                    copiaEstados.get(e.getNombre()).setTransicionForInput(new Transicion(input, "", destinosTemp),
+                            input);
                 }
             }
         }
@@ -437,11 +459,8 @@ public class Automata {
                             String edge = grafo.findEdge(e.getNombre(), d.getNombre());
                             System.out.println(edge);
                             grafo.removeEdge(edge);
-                            System.out.println("AGREGANDO NUEVO");
-                            if (!grafo.addEdge(edge.toString().split(" ")[0] + "," + i + " " + n.toString(),
-                                    e.getNombre(), d.getNombre())) {
-                                System.out.println("NOPUED");
-                            }
+                            grafo.addEdge(edge.toString().split(" ")[0] + "," + i + " " + n.toString(),
+                                    e.getNombre(), d.getNombre());
                         }
 
                     }
