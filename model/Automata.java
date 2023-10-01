@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeSet;
 
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
@@ -93,7 +94,6 @@ public class Automata {
         for (String input : this.lenguaje) {
             destinos.put(input, new ArrayList<>());
             for (Estado e : estados) {
-                System.out.println(e + "...." + input + e.getDestinos(input));
                 for (Estado destino : e.getDestinos(input)) {
                     if (!this.destinosContains(destinos.get(input), destino)) {
                         destinos.get(input).add(new Transicion(input, "", destino));
@@ -160,7 +160,6 @@ public class Automata {
         }
 
         List<Estado> estadosSinProcesar = new ArrayList<>();
-        // Deep copy de los estados del automata original
         for (Estado e : this.getEstadosList()) {
             estadosSinProcesar.add(0, copiaEstados.get(e.getNombre()));
             for (String input : this.lenguaje) {
@@ -169,15 +168,6 @@ public class Automata {
                     destinosTemp.add(copiaEstados.get(d.getNombre()));
                 }
                 estadosSinProcesar.get(0).setTransicionForInput(new Transicion(input, "", destinosTemp), input);
-            }
-        }
-
-        for (Estado e : estadosSinProcesar) {
-            for (String i : this.getLenguaje()) {
-                System.out.println("Estado " + e + " " + i + " " + e.getDestinos(i));
-                for (Estado d : e.getDestinos(i)) {
-                    System.out.println("DESTINO CON " + i + " " + d.getDestinos(i));
-                }
             }
         }
 
@@ -216,7 +206,6 @@ public class Automata {
                         }
 
                         if (!contiene) {
-                            System.out.println(estadoActual + "----" + estadoActual.getDestinos(input) + "---" + input);
                             Estado newEstado = this.getNewEstado(estadoActual.getDestinos(input), nombre);
                             estadoActual.setTransicionForInput(new Transicion(input, "", newEstado), input);
                             estadosSinProcesar.add(newEstado);
@@ -250,8 +239,8 @@ public class Automata {
             copiaEstados.put(e.getNombre(), new Estado(e.getNombre(), e.isAceptador()));
         }
 
-        List<Estado> destinosTemp = new ArrayList<>();
         for (String input : this.lenguaje) {
+            List<Estado> destinosTemp = new ArrayList<>();
             for (Estado d : this.getEstadoInicial().getDestinos(input)) {
                 destinosTemp.add(copiaEstados.get(d.getNombre()));
             }
@@ -264,10 +253,10 @@ public class Automata {
         gruposSinProcesar.add(0, new ArrayList<>());
         gruposSinProcesar.add(1, new ArrayList<>());
         for (Estado e : this.getEstadosList()) {
-            destinosTemp = new ArrayList<>();
             if (e.isAceptador()) {
                 gruposSinProcesar.get(1).add(copiaEstados.get(e.getNombre()));
                 for (String input : this.lenguaje) {
+                    List<Estado> destinosTemp = new ArrayList<>();
                     for (Estado d : e.getDestinos(input)) {
                         destinosTemp.add(copiaEstados.get(d.getNombre()));
                     }
@@ -277,6 +266,7 @@ public class Automata {
             } else {
                 gruposSinProcesar.get(0).add(copiaEstados.get(e.getNombre()));
                 for (String input : this.lenguaje) {
+                    List<Estado> destinosTemp = new ArrayList<>();
                     for (Estado d : e.getDestinos(input)) {
                         destinosTemp.add(copiaEstados.get(d.getNombre()));
                     }
@@ -288,13 +278,13 @@ public class Automata {
 
         int longitud = 0;
         boolean termine = false;
-        List<List<Estado>> tempList = new ArrayList<>();
+        List<List<Estado>> tempList;
         // Recorrer cada grupo con las cadenas generadas para ver si se separan
         while (!termine) {
             termine = true;
             longitud++;
             tempList = new ArrayList<>();
-            List<String> cadenas = this.getCadenas(longitud);
+            TreeSet<String> cadenas = this.getCadenas(longitud);
             while (!gruposSinProcesar.isEmpty()) {
                 List<Estado> grupo = gruposSinProcesar.remove(0);
                 Map<Estado, String> resultados = new HashMap<>();
@@ -349,6 +339,19 @@ public class Automata {
                 }
             }
         }
+
+        /*
+         * Si un grupo me quedo con nombre de estado de error se lo cambio si es posible
+         * porque se me complica desp si no
+         */
+        for (List<Estado> grupoMin : gruposMinimizados) {
+            if (estadosMin.get(grupoMin.get(0).getNombre()).getNombre().equals("-")) {
+                if (grupoMin.get(1) != null)
+                    estadosMin.get(grupoMin.get(0).getNombre()).setNombre(grupoMin.get(1).getNombre());
+            }
+
+        }
+
         minimizado.setEstados(estadosMin);
         minimizado.setEstadoInicial(nuevoInicial.getNombre());
         minimizado.setLenguaje(new ArrayList<String>(this.lenguaje));
@@ -382,9 +385,9 @@ public class Automata {
         return answer;
     }
 
-    private List<String> getCadenas(int n) {
+    private TreeSet<String> getCadenas(int n) {
         String cadenaParcial = "";
-        List<String> resultado = new ArrayList<>();
+        TreeSet<String> resultado = new TreeSet<String>();
         if (n == 0) {
             resultado.add(cadenaParcial.trim());
         } else {
@@ -396,7 +399,7 @@ public class Automata {
         return resultado;
     }
 
-    private List<String> getCadenas(String cadenaParcial, int n, List<String> resultado) {
+    private TreeSet<String> getCadenas(String cadenaParcial, int n, TreeSet<String> resultado) {
         if (n == 0) {
             resultado.add(cadenaParcial.trim());
         } else {
@@ -466,7 +469,6 @@ public class Automata {
                     if (!d.getNombre().equals(Constantes.ERROR)) {
                         if (!grafo.addEdge(i + " " + n.toString(), e.getNombre(), d.getNombre())) {
                             String edge = grafo.findEdge(e.getNombre(), d.getNombre());
-                            System.out.println(edge);
                             grafo.removeEdge(edge);
                             grafo.addEdge(edge.toString().split(" ")[0] + "," + i + " " + n.toString(),
                                     e.getNombre(), d.getNombre());

@@ -31,7 +31,6 @@ public class Estado {
         Estado walker = this;
         for (String i : input) {
             walker = walker.getNext(i);
-            System.out.println(i + " " + walker);
             if (walker == null)
                 return false;
         }
