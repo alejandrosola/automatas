@@ -93,8 +93,8 @@ public class Automata {
         for (String input : this.lenguaje) {
             destinos.put(input, new ArrayList<>());
             for (Estado e : estados) {
+                System.out.println(e + "...." + input + e.getDestinos(input));
                 for (Estado destino : e.getDestinos(input)) {
-                    System.out.println(e + "----" + e.getDestinos(input) + "---" + input);
                     if (!this.destinosContains(destinos.get(input), destino)) {
                         destinos.get(input).add(new Transicion(input, "", destino));
                     }
@@ -162,13 +162,22 @@ public class Automata {
         List<Estado> estadosSinProcesar = new ArrayList<>();
         // Deep copy de los estados del automata original
         for (Estado e : this.getEstadosList()) {
-            destinosTemp = new ArrayList<>();
-            estadosSinProcesar.add(0, new Estado(e.getNombre(), e.isAceptador()));
+            estadosSinProcesar.add(0, copiaEstados.get(e.getNombre()));
             for (String input : this.lenguaje) {
+                destinosTemp = new ArrayList<>();
                 for (Estado d : e.getDestinos(input)) {
                     destinosTemp.add(copiaEstados.get(d.getNombre()));
                 }
                 estadosSinProcesar.get(0).setTransicionForInput(new Transicion(input, "", destinosTemp), input);
+            }
+        }
+
+        for (Estado e : estadosSinProcesar) {
+            for (String i : this.getLenguaje()) {
+                System.out.println("Estado " + e + " " + i + " " + e.getDestinos(i));
+                for (Estado d : e.getDestinos(i)) {
+                    System.out.println("DESTINO CON " + i + " " + d.getDestinos(i));
+                }
             }
         }
 
