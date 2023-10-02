@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeSet;
 
 import edu.uci.ics.jung.graph.DirectedGraph;
@@ -239,6 +243,16 @@ public class Automata {
             copiaEstados.put(e.getNombre(), new Estado(e.getNombre(), e.isAceptador()));
         }
 
+        for (Estado e : this.getEstadosList())
+            for (String input : this.lenguaje) {
+                List<Estado> destinosTemp = new ArrayList<>();
+                for (Estado d : e.getDestinos(input)) {
+                    destinosTemp.add(copiaEstados.get(d.getNombre()));
+                }
+                copiaEstados.get(e.getNombre()).setTransicionForInput(new Transicion(input, "", destinosTemp),
+                        input);
+            }
+
         for (String input : this.lenguaje) {
             List<Estado> destinosTemp = new ArrayList<>();
             for (Estado d : this.getEstadoInicial().getDestinos(input)) {
@@ -246,6 +260,7 @@ public class Automata {
             }
             nuevoEstadoInicial.setTransicionForInput(new Transicion(input, "", destinosTemp), input);
         }
+        this.eliminarEstadosInalcanzables(copiaEstados, nuevoEstadoInicial);
 
         // Separar los estados aceptadores de los no aceptadores en dos grupos
         List<List<Estado>> gruposSinProcesar = new ArrayList<>();
@@ -254,25 +269,11 @@ public class Automata {
         gruposSinProcesar.add(1, new ArrayList<>());
         for (Estado e : this.getEstadosList()) {
             if (e.isAceptador()) {
-                gruposSinProcesar.get(1).add(copiaEstados.get(e.getNombre()));
-                for (String input : this.lenguaje) {
-                    List<Estado> destinosTemp = new ArrayList<>();
-                    for (Estado d : e.getDestinos(input)) {
-                        destinosTemp.add(copiaEstados.get(d.getNombre()));
-                    }
-                    copiaEstados.get(e.getNombre()).setTransicionForInput(new Transicion(input, "", destinosTemp),
-                            input);
-                }
+                if (copiaEstados.get(e.getNombre()) != null)
+                    gruposSinProcesar.get(1).add(copiaEstados.get(e.getNombre()));
             } else {
-                gruposSinProcesar.get(0).add(copiaEstados.get(e.getNombre()));
-                for (String input : this.lenguaje) {
-                    List<Estado> destinosTemp = new ArrayList<>();
-                    for (Estado d : e.getDestinos(input)) {
-                        destinosTemp.add(copiaEstados.get(d.getNombre()));
-                    }
-                    copiaEstados.get(e.getNombre()).setTransicionForInput(new Transicion(input, "", destinosTemp),
-                            input);
-                }
+                if (copiaEstados.get(e.getNombre()) != null)
+                    gruposSinProcesar.get(0).add(copiaEstados.get(e.getNombre()));
             }
         }
 
@@ -346,7 +347,7 @@ public class Automata {
          */
         for (List<Estado> grupoMin : gruposMinimizados) {
             if (estadosMin.get(grupoMin.get(0).getNombre()).getNombre().equals("-")) {
-                if (grupoMin.get(1) != null)
+                if (grupoMin.size() > 1)
                     estadosMin.get(grupoMin.get(0).getNombre()).setNombre(grupoMin.get(1).getNombre());
             }
 
@@ -366,6 +367,68 @@ public class Automata {
             }
         }
         return false;
+    }
+
+    private void eliminarEstadosInalcanzables(List<Estado> estados, Estado inicial) {
+        Set<Estado> estadosAlcanzables = new HashSet<>();
+        Set<Estado> estadosNoAlcanzables = new HashSet<>(estados);
+
+        Queue<Estado> cola = new LinkedList<>();
+
+        // Agregar el estado inicial a la lista de alcanzables
+        Estado estadoInicial = inicial;
+        estadosAlcanzables.add(estadoInicial);
+        estadosNoAlcanzables.remove(estadoInicial);
+        cola.add(estadoInicial);
+
+        // Realizar un recorrido en anchura para encontrar estados alcanzables
+        while (!cola.isEmpty()) {
+            Estado estadoActual = cola.poll();
+            for (String input : this.lenguaje) {
+                Estado estadoDestino = estadoActual.getNext(input);
+                if (estadoDestino != null && !estadosAlcanzables.contains(estadoDestino)) {
+                    estadosAlcanzables.add(estadoDestino);
+                    estadosNoAlcanzables.remove(estadoDestino);
+                    cola.add(estadoDestino);
+                }
+            }
+        }
+
+        // Eliminar estados inalcanzables
+        for (Estado estadoNoAlcanzable : estadosNoAlcanzables) {
+            estados.remove(estadoNoAlcanzable);
+        }
+    }
+
+    public void eliminarEstadosInalcanzables(Map<String, Estado> estados, Estado inicial) {
+        Set<Estado> estadosAlcanzables = new HashSet<>();
+        Set<Estado> estadosNoAlcanzables = new HashSet<>(estados.values());
+
+        Queue<Estado> cola = new LinkedList<>();
+
+        // Agregar el estado inicial a la lista de alcanzables
+        estadosAlcanzables.add(inicial);
+        estadosNoAlcanzables.remove(inicial);
+        cola.add(inicial);
+
+        // Realizar un recorrido en anchura para encontrar estados alcanzables
+        while (!cola.isEmpty()) {
+            Estado estadoActual = cola.poll();
+            for (String input : this.lenguaje) {
+                Estado estadoDestino = estadoActual.getNext(input);
+                if (estadoDestino != null && !estadosAlcanzables.contains(estadoDestino)) {
+                    estadosAlcanzables.add(estadoDestino);
+                    estadosNoAlcanzables.remove(estadoDestino);
+                    cola.add(estadoDestino);
+                }
+            }
+        }
+
+        // Eliminar estados inalcanzables
+        for (Estado estadoNoAlcanzable : estadosNoAlcanzables) {
+            if (!estadoNoAlcanzable.getNombre().equals(inicial.getNombre()))
+                estados.remove(estadoNoAlcanzable.getNombre());
+        }
     }
 
     private List<List<Estado>> nuevosGrupos(Map<Estado, String> resultados) {

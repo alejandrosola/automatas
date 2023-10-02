@@ -80,7 +80,7 @@ public class Estado {
         this.transiciones.put(input, transicion);
     }
 
-    private Estado getNext(String input) {
+    public Estado getNext(String input) {
         if (this.transiciones.get(input) != null)
             return this.transiciones.get(input).getDestinos().get(0);
         return null;
