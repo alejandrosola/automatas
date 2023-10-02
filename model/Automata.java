@@ -331,7 +331,7 @@ public class Automata {
             }
             for (String i : this.getLenguaje()) {
                 for (List<Estado> grupoMin : gruposMinimizados) {
-                    if (grupoContiene(grupoMin, this.getEstado(em.getNombre()).getDestinos(i).get(0))) {
+                    if (grupoContiene(grupoMin, copiaEstados.get(em.getNombre()).getDestinos(i).get(0))) {
                         em.addTransicion(
                                 new Transicion(i, "", estadosMin.get(grupoMin.get(0).getNombre())));
 
